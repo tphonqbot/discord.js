@@ -81,7 +81,7 @@
  * @property {string} VoiceServerUpdate voiceServerUpdate
  * @property {string} VoiceStateUpdate voiceStateUpdate
  * @property {string} Warn warn
- * @property {string} WebhooksUpdate webhookUpdate
+ * @property {string} WebhooksUpdate webhooksUpdate
  */
 
 // JSDoc for IntelliSense purposes
@@ -170,5 +170,5 @@ module.exports = {
   VoiceServerUpdate: 'voiceServerUpdate',
   VoiceStateUpdate: 'voiceStateUpdate',
   Warn: 'warn',
-  WebhooksUpdate: 'webhookUpdate',
+  WebhooksUpdate: 'webhooksUpdate',
 };

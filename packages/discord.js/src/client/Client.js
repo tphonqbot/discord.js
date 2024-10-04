@@ -31,8 +31,6 @@ const PermissionsBitField = require('../util/PermissionsBitField');
 const Status = require('../util/Status');
 const Sweepers = require('../util/Sweepers');
 
-let deprecationEmittedForPremiumStickerPacks = false;
-
 /**
  * The main hub for interacting with the Discord API, and the starting point for any bot.
  * @extends {BaseClient}
@@ -343,34 +341,33 @@ class Client extends BaseClient {
   }
 
   /**
+   * Options for fetching sticker packs.
+   * @typedef {Object} StickerPackFetchOptions
+   * @property {Snowflake} [packId] The id of the sticker pack to fetch
+   */
+
+  /**
    * Obtains the list of available sticker packs.
-   * @returns {Promise<Collection<Snowflake, StickerPack>>}
+   * @param {StickerPackFetchOptions} [options={}] Options for fetching sticker packs
+   * @returns {Promise<Collection<Snowflake, StickerPack>|StickerPack>}
+   * A collection of sticker packs, or a single sticker pack if a packId was provided
    * @example
    * client.fetchStickerPacks()
    *   .then(packs => console.log(`Available sticker packs are: ${packs.map(pack => pack.name).join(', ')}`))
    *   .catch(console.error);
+   * @example
+   * client.fetchStickerPacks({ packId: '751604115435421716' })
+   *   .then(pack => console.log(`Sticker pack name: ${pack.name}`))
+   *   .catch(console.error);
    */
-  async fetchStickerPacks() {
-    const data = await this.rest.get(Routes.stickerPacks());
-    return new Collection(data.sticker_packs.map(stickerPack => [stickerPack.id, new StickerPack(this, stickerPack)]));
-  }
-
-  /**
-   * Obtains the list of available sticker packs.
-   * @returns {Promise<Collection<Snowflake, StickerPack>>}
-   * @deprecated Use {@link Client#fetchStickerPacks} instead.
-   */
-  fetchPremiumStickerPacks() {
-    if (!deprecationEmittedForPremiumStickerPacks) {
-      process.emitWarning(
-        'The Client#fetchPremiumStickerPacks() method is deprecated. Use Client#fetchStickerPacks() instead.',
-        'DeprecationWarning',
-      );
-
-      deprecationEmittedForPremiumStickerPacks = true;
+  async fetchStickerPacks({ packId } = {}) {
+    if (packId) {
+      const data = await this.rest.get(Routes.stickerPack(packId));
+      return new StickerPack(this, data);
     }
 
-    return this.fetchStickerPacks();
+    const data = await this.rest.get(Routes.stickerPacks());
+    return new Collection(data.sticker_packs.map(stickerPack => [stickerPack.id, new StickerPack(this, stickerPack)]));
   }
 
   /**
@@ -534,6 +531,9 @@ class Client extends BaseClient {
     }
     if (typeof options.failIfNotExists !== 'boolean') {
       throw new DiscordjsTypeError(ErrorCodes.ClientInvalidOption, 'failIfNotExists', 'a boolean');
+    }
+    if (typeof options.enforceNonce !== 'boolean') {
+      throw new DiscordjsTypeError(ErrorCodes.ClientInvalidOption, 'enforceNonce', 'a boolean');
     }
     if (
       (typeof options.allowedMentions !== 'object' && options.allowedMentions !== undefined) ||
